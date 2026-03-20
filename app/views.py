@@ -2,6 +2,7 @@ from django.shortcuts import render,redirect
 from django.http import HttpResponse,JsonResponse
 from .models import Player_Serializer as p
 import json
+import io
 from django.forms.models import model_to_dict
 from django.views.decorators.csrf import csrf_exempt
 from .serializers import PlayerSerializer
@@ -15,8 +16,9 @@ def landing(req):
 def seralizeall(req):
     if req.method == "POST":
         print(req.body)
-        data =json.loads(req.body)
-        serializer = PlayerSerializer(data=data)
+        stream =io.BytesIO(req.body)
+        p_data=JSONParser().parse(stream)
+        serializer = PlayerSerializer(data=p_data)
         if serializer.is_valid():
             serializer.save()
             return JsonResponse(serializer.data)
@@ -30,20 +32,19 @@ def seralizeall(req):
 @csrf_exempt
 def seralizeone(req,id):
     if req.method == "PUT":
-        data = json.loads(req.body)
-
+        stream= io.BytesIO(req.body)
+        new_p_data=JSONParser().parse(stream)
         obj = p.objects.get(id=id)
-
-        serializer = PlayerSerializer(obj, data=data)
+        serializer = PlayerSerializer(obj, new_p_data)
         if serializer.is_valid():
             serializer.save()
             return JsonResponse(serializer.data)
-
         return JsonResponse(serializer.errors)
     if req.method == "PATCH":
-        data = json.loads(req.body)
+        stream= io.BytesIO(req.body)
+        new_p_data=JSONParser().parse(stream)
         obj = p.objects.get(id=id)
-        serializer = PlayerSerializer(obj, data=data,partial=True)
+        serializer = PlayerSerializer(obj, new_p_data,partial=True)
         if serializer.is_valid():
             serializer.save()
             return JsonResponse(serializer.data)
